@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Music Library — Persistent Upload Demo</title>
+
+  <!-- Inter & Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">M</div>
+        <div>
+          <div style="font-size:16px">Music Library</div>
+          <div style="font-size:12px;color:var(--muted)">Persistent Upload Demo</div>
+        </div>
+      </div>
+
+      <div class="controls" role="group" aria-label="Top controls">
+        <div class="badge" id="favoritesCount">0 favorites</div>
+        <button class="icon-btn" id="toggleTheme" title="Toggle theme" aria-pressed="false"><i class="fa-solid fa-moon"></i></button>
+        <button class="icon-btn" id="openUpload" title="Upload" aria-label="Upload song"><i class="fa-solid fa-cloud-arrow-up"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-left">
+        <h1 class="title">Your Music Library</h1>
+        <div class="subtitle">Upload, browse, favorite and play. Persistent storage enabled (IndexedDB).</div>
+
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="search" aria-label="Search">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--muted)"></i>
+            <input id="search" placeholder="Search artist, album or song..." aria-label="Search songs">
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="Views">
+            <button id="tabHome" class="tab active" role="tab" aria-selected="true">Home</button>
+            <button id="tabFavs" class="tab" role="tab" aria-selected="false">Favorites</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick" aria-hidden="true">
+        <div style="font-size:13px;color:var(--muted)">Quick actions</div>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn" id="showAll">All</button>
+          <button class="btn" id="showFavs">Favorites</button>
+        </div>
+      </div>
+    </section>
+
+    <h3 id="mainSectionTitle" style="margin-top:6px">Library</h3>
+
+    <div id="grid" class="grid" aria-live="polite" aria-atomic="true"></div>
+    <div id="noResults" class="no-results" style="display:none">No results — try another keyword.</div>
+
+    <h3 class="section-title" style="margin-top:28px">Upload</h3>
+    <div class="upload-area" id="uploadArea" role="button" tabindex="0" aria-label="Upload songs">
+      <div><i class="fa-solid fa-cloud-arrow-up" style="font-size:28px;color:var(--accent)"></i></div>
+      <div style="margin-top:10px;font-weight:600">Drag & drop or click to select</div>
+      <div style="color:var(--muted);margin-top:6px;font-size:13px">Uploaded songs are persistent in your browser (IndexedDB).</div>
+      <input id="fileInput" type="file" accept="audio/*" style="display:none"/>
+    </div>
+  </main>
+
+  <!-- Lyrics modal -->
+  <div id="lyricsModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="lyricsTitle">
+      <button id="closeModal" style="float:right;border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer" aria-label="Close lyrics">&times;</button>
+      <h3 id="lyricsTitle">Lyrics</h3>
+      <pre id="lyricsContent" style="white-space:pre-wrap;color:var(--muted)"></pre>
+    </div>
+  </div>
+
+  <!-- Now playing modal -->
+  <div id="nowPlayingModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="nowPlayingTitle">
+      <button id="closeNowPlaying" style="align-self:flex-start;border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer" aria-label="Back to player">&larr; Back</button>
+      <div class="now-left">
+        <img id="nowPlayingCover" class="now-playing-cover" src="" alt="Now playing cover">
+      </div>
+      <div class="now-right">
+        <div>
+          <div class="now-title" id="nowPlayingTitle">Not playing</div>
+          <div class="now-artist" id="nowPlayingArtist">—</div>
+        </div>
+
+        <div class="now-controls" role="group" aria-label="Playback controls">
+          <button class="btn" id="nowPrev" title="Previous"><i class="fa-solid fa-backward"></i></button>
+          <button class="now-big-play" id="nowPlay" title="Play/Pause"><i class="fa-solid fa-play"></i></button>
+          <button class="btn" id="nowNext" title="Next"><i class="fa-solid fa-forward"></i></button>
+        </div>
+
+        <div style="width:100%;margin-top:8px;">
+          <div class="progress-row">
+            <div class="time" id="nowTimeCurrent">0:00</div>
+            <div class="progress" id="nowProgress" aria-label="Now playing progress">
+              <div class="buffer" id="nowBuffer"></div>
+              <div class="bar" id="nowBar"></div>
+              <div class="thumb" id="nowThumb"></div>
+            </div>
+            <div class="time" id="nowTimeDuration">0:00</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom player -->
+  <div class="player" id="playerBar" title="Open now playing" aria-hidden="false">
+    <div class="track" role="button" aria-label="Open now playing">
+      <img id="playerCover" src="" alt="cover" />
+      <div class="meta">
+        <div class="t" id="playerTitle">Not playing</div>
+        <div class="a" id="playerArtist">—</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-row">
+        <div class="time" id="timeCurrent">0:00</div>
+        <div class="progress" id="progress" aria-label="Playback progress">
+          <div class="buffer" id="bufferBar"></div>
+          <div class="bar" id="progressBar"></div>
+          <div class="thumb" id="progressThumb"></div>
+        </div>
+        <div class="time" id="timeDuration">0:00</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="controls-compact" role="group" aria-label="Player controls">
+          <button class="btn" id="prevBtn" title="Previous"><i class="fa-solid fa-backward"></i></button>
+          <button class="play-btn" id="playerPlay" title="Play/Pause"><i class="fa-solid fa-play"></i></button>
+          <button class="btn" id="nextBtn" title="Next"><i class="fa-solid fa-forward"></i></button>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="speedSelect" class="btn" title="Playback speed" aria-label="Playback speed">
+            <option value="1">1x</option><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+          </select>
+          <button id="repeatBtn" class="btn" title="Toggle repeat"><i class="fa-solid fa-retweet"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
